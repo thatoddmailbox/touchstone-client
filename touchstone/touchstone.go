@@ -29,13 +29,18 @@ type Client struct {
 	conversation string
 }
 
-// NewClient creates a new Touchstone Client.
+// NewClient creates a new Touchstone client.
 func NewClient() *Client {
 	cookieJar, _ := cookiejar.New(nil)
+	return NewClientWithHTTPClient(&http.Client{
+		Jar: cookieJar,
+	})
+}
+
+// NewClientWithHTTPClient creates a new Touchstone client, using the provided *http.Client.
+func NewClientWithHTTPClient(httpClient *http.Client) *Client {
 	return &Client{
-		HTTPClient: &http.Client{
-			Jar: cookieJar,
-		},
+		HTTPClient: httpClient,
 	}
 }
 
