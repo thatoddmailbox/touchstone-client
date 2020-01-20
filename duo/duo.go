@@ -12,6 +12,7 @@ import (
 	"golang.org/x/net/html"
 )
 
+var fieldsetRegex = regexp.MustCompile("<fieldset data-device-index=\"(.*)\" class=\"hidden\">([\\w\\W]*?)<\\/fieldset>")
 var inputRegex = regexp.MustCompile("<input type=\"hidden\" name=\"(.*)\" value=\"(.*)\">")
 
 // An Challenge is a 2FA request from Duo.
@@ -154,18 +155,32 @@ func BeginChallenge(c *http.Client, parent string, host string, sigRequest strin
 		return nil, err
 	}
 
-	// get hidden inputs
-	inputs := inputRegex.FindAllStringSubmatch(string(duoPromptBody), -1)
+	methodStringsForDevice := map[string][]string{}
 
-	methodStrings := []string{}
+	// get fieldsets
+	fieldsets := fieldsetRegex.FindAllStringSubmatch(string(duoPromptBody), -1)
+	for _, fieldsetGroups := range fieldsets {
+		deviceIndex := fieldsetGroups[1]
+		contents := fieldsetGroups[2]
+
+		// get hidden inputs
+		inputs := inputRegex.FindAllStringSubmatch(contents, -1)
+
+		methodStringsForDevice[deviceIndex] = []string{}
+
+		for _, inputGroups := range inputs {
+			if inputGroups[1] == "factor" {
+				methodStringsForDevice[deviceIndex] = append(methodStringsForDevice[deviceIndex], htmlEncode.UnescapeString(inputGroups[2]))
+			}
+		}
+	}
 
 	hiddenInputs := url.Values{}
+	inputs := inputRegex.FindAllStringSubmatch(string(duoPromptBody), -1)
 	for _, inputGroups := range inputs {
-		if inputGroups[1] == "factor" {
-			methodStrings = append(methodStrings, htmlEncode.UnescapeString(inputGroups[2]))
-			continue
+		if inputGroups[1] != "factor" {
+			hiddenInputs.Add(inputGroups[1], htmlEncode.UnescapeString(inputGroups[2]))
 		}
-		hiddenInputs.Add(inputGroups[1], htmlEncode.UnescapeString(inputGroups[2]))
 	}
 
 	// get device list
@@ -216,12 +231,14 @@ func BeginChallenge(c *http.Client, parent string, host string, sigRequest strin
 
 	methods := []Method{}
 	if len(devices) > 0 {
-		for _, method := range methodStrings {
-			methods = append(methods, Method{
-				FriendlyName: method,
-				DeviceName:   devices[0].FriendlyName,
-				DeviceIndex:  devices[0].Index,
-			})
+		for _, device := range devices {
+			for _, method := range methodStringsForDevice[device.Index] {
+				methods = append(methods, Method{
+					FriendlyName: method,
+					DeviceName:   device.FriendlyName,
+					DeviceIndex:  device.Index,
+				})
+			}
 		}
 	}
 
