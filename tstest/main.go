@@ -57,6 +57,7 @@ func main() {
 	}
 
 	log.Println(status.Status)
+	log.Println(status.StatusCode)
 
 	final, response, err := challenge.WaitForCompletion()
 	if err != nil {
@@ -64,6 +65,7 @@ func main() {
 	}
 
 	log.Println(response.Status)
+	log.Println(response.StatusCode)
 
 	if final == nil {
 		// the status from above has the details
