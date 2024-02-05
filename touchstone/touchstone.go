@@ -17,7 +17,7 @@ import (
 const baseURLString = "https://idp.mit.edu/"
 
 // we need somewhere to start the process
-const authStartURL = "https://student.mit.edu/"
+const authStartURL = "https://student.mit.edu/ent/cgi-docs/shrwstop.html"
 
 // regex to parse duo info
 var duoInitRegex = regexp.MustCompile("Duo\\.init\\(\\{\\n\\s+'host': \"(.*)\",\\n\\s+'sig_request': \"(.*)\",\\n\\s+'post_action': \"(.*)\"\\n")
