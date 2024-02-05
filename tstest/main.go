@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/AlecAivazis/survey"
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/thatoddmailbox/touchstone-client/duo"
 	"github.com/thatoddmailbox/touchstone-client/touchstone"
 )
